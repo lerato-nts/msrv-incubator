@@ -8,5 +8,5 @@ import java.util.List;
 
 @Service
 public interface IHeroesService {
-    public List<SuperHero> getSuperHeroList() throws JsonProcessingException;
+    List<SuperHero> getSuperHeroList() throws JsonProcessingException;
 }

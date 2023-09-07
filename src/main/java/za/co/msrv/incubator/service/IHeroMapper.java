@@ -4,5 +4,5 @@ import za.co.msrv.incubator.dto.SuperHeroDTO;
 import za.co.msrv.incubator.model.SuperHero;
 
 public interface IHeroMapper {
-    public SuperHeroDTO convertToDto(SuperHero superHero);
+    SuperHeroDTO convertToDto(SuperHero superHero);
 }
