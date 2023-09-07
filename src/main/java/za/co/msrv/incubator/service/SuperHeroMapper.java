@@ -5,7 +5,7 @@ import za.co.msrv.incubator.dto.SuperHeroDTO;
 import za.co.msrv.incubator.model.SuperHero;
 
 @Service
-public class SuperHeroMapper {
+public class SuperHeroMapper implements IHeroMapper {
     public SuperHeroDTO convertToDto(SuperHero superHero) {
         return SuperHeroDTO.builder()
                             .title(superHero.getName())
