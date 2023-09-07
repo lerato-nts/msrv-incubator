@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import za.co.msrv.incubator.dto.SuperHeroDTO;
 import za.co.msrv.incubator.model.SuperHero;
+import za.co.msrv.incubator.service.IHeroesService;
 import za.co.msrv.incubator.service.SuperHeroMapper;
-import za.co.msrv.incubator.service.SuperHeroesService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 @Api(value = "Super Heroes Controller")
 @RequestMapping("/api/v1/heroes")
 public class SuperHeroesController {
-    private final SuperHeroesService superHeroesService;
+    private final IHeroesService superHeroesService;
     private final SuperHeroMapper superHeroMapper;
 
     @Autowired
-    public SuperHeroesController(SuperHeroesService superHeroesService, SuperHeroMapper superHeroMapper) {
+    public SuperHeroesController(IHeroesService superHeroesService, SuperHeroMapper superHeroMapper) {
         this.superHeroesService = superHeroesService;
         this.superHeroMapper = superHeroMapper;
     }
