@@ -17,12 +17,16 @@ public class SuperHeroBiography {
             return "";
 
         StringBuilder strAliases = new StringBuilder("also known as (");
-        for(String alias : aliases) {
-            strAliases.append(alias);
+        String alias = aliases[0];
+        strAliases.append(alias);
+
+        for(int i=1; i<aliases.length; i++) {
+            alias = aliases[i];
             strAliases.append(", ");
+            strAliases.append(alias);
         }
 
-        strAliases.append("...)");
+        strAliases.append(")");
 
         return strAliases.toString();
     }
@@ -30,7 +34,7 @@ public class SuperHeroBiography {
     public String toString() {
         return  fullName + " " +
                 getAliases() + " " +
-                "was born at " + placeOfBirth + " " +
+                "was born at " + placeOfBirth + ", " +
                 "and first appeared on " + firstAppearance + ". " +
                 "Alter Egos: " + alterEgos;
     }
