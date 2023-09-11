@@ -3,9 +3,11 @@ package za.co.msrv.incubator.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SuperHeroBiography {
+public class SuperHeroBiography implements Serializable {
     private String fullName;
     private String alterEgos;
     private String[] aliases;
