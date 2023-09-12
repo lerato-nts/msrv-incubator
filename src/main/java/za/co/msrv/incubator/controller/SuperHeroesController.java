@@ -6,12 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import za.co.msrv.incubator.dto.SuperHeroDTO;
 import za.co.msrv.incubator.model.SuperHero;
 import za.co.msrv.incubator.service.IHeroesService;
 import za.co.msrv.incubator.service.SuperHeroMapper;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.websocket.server.PathParam;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,8 +35,11 @@ public class SuperHeroesController {
     @GetMapping
     @ApiOperation(value = "A list of Super Heroes matching the search parameter")
     public ResponseEntity<List<SuperHeroDTO>> getHeroesByFilter(
-            @PathParam("search") String searchPhrase,
-            @PathParam("size") int resultSize)
+            @RequestParam("searchPhrase") String searchPhrase,
+            @RequestParam(defaultValue = "5", name = "resultSize")
+            @Min(1)
+            @Max(20)
+            Integer resultSize)
     {
         List<SuperHero> superHeroList = superHeroesService.getSuperHeroByFilter(searchPhrase, resultSize);
 
