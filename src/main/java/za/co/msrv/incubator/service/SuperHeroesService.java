@@ -34,7 +34,7 @@ public class SuperHeroesService implements IHeroesService {
             String url = API_URL + API_PARAM;
             return callExternalAPI(url);
         }
-        catch (RestClientException | JsonProcessingException e) {
+        catch (RestClientException e) {
             String errorMsg = "External API Call Exception: " + e.getMessage();
             throw new ExternalAPIException(errorMsg);
         }
@@ -51,21 +51,25 @@ public class SuperHeroesService implements IHeroesService {
                         .limit(resultSize)
                         .collect(Collectors.toList());
         }
-        catch (RestClientException | JsonProcessingException e) {
-            String errorMsg = "External API Call Exception: " + e.getMessage();
-            throw new ExternalAPIException(errorMsg);
+        catch (RestClientException e) {
+            throw new ExternalAPIException(e.getMessage());
         }
     }
 
-    private List<SuperHero> callExternalAPI(String url) throws JsonProcessingException {
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, apiEntity, String.class);
+    private List<SuperHero> callExternalAPI(String url) {
+        String responseBody = "";
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, apiEntity, String.class);
+            responseBody = response.getBody();
 
-        String responseBody = response.getBody();
+            if (responseBody == null || responseBody.isEmpty())
+                throw new ExternalAPIException("No data found!");
 
-        if(responseBody==null || responseBody.isEmpty())
-            throw new ExternalAPIException("No data found!");
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(responseBody, new TypeReference<>() {});
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(responseBody, new TypeReference<>() {});
+        }
+        catch (JsonProcessingException e) {
+            throw new ExternalAPIException(responseBody);
+        }
     }
 }
