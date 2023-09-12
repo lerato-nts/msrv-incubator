@@ -10,3 +10,10 @@ server:
 logging:
   level:
     root: warn
+
+cache:
+  hazelcast:
+    hero:
+      ttl: 60
+    heroes:
+      ttl: 360

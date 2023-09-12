@@ -7,7 +7,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 
 @Configuration
-public class ServiceConfig {
+public class ServiceApiConfig {
     @Value("${api.header.key.name}")
     private String API_HEADER_KEY;
     @Value("${api.header.key.value}")

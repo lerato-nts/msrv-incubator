@@ -6,3 +6,10 @@ server:
     context-path: /
     session:
       timeout: 10m
+
+cache:
+  hazelcast:
+    hero:
+      ttl: 20
+    heroes:
+      ttl: 60

@@ -17,6 +17,7 @@ import za.co.msrv.incubator.model.SuperHero;
 
 import java.util.List;
 
+
 @Slf4j
 @Service
 public class SuperHeroesService implements IHeroesService {
@@ -33,6 +34,7 @@ public class SuperHeroesService implements IHeroesService {
         this.apiEntity = apiEntity;
     }
 
+    @Override
     @Cacheable("heroes")
     public List<SuperHero> getSuperHeroList() {
         try {
@@ -49,8 +51,8 @@ public class SuperHeroesService implements IHeroesService {
         }
     }
 
-    @Cacheable(value = "heroesFilter", key = "#searchPhrase")
     @Override
+    @Cacheable(value = "hero", key = "#searchPhrase")
     public SuperHero getSuperHeroByFilter(String searchPhrase) {
         String apiResults = "";
         try {
@@ -75,7 +77,7 @@ public class SuperHeroesService implements IHeroesService {
     }
 
     private String callExternalAPI(String url) {
-        log.debug("Calling the External API: {}", url);
+        log.info("Calling the External API: {}", url);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, apiEntity, String.class);
         String responseBody = response.getBody();
 
@@ -84,7 +86,7 @@ public class SuperHeroesService implements IHeroesService {
             throw new ExternalAPIException("No data found!");
         }
 
-        log.info("Response from API: {} ", responseBody);
+        log.trace("Response from API: {} ", responseBody);
         return responseBody;
     }
 }
