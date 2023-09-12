@@ -3,17 +3,21 @@ package za.co.msrv.incubator.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.*;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import za.co.msrv.incubator.model.SuperHero;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class SuperHeroesService implements IHeroesService {
     private static final String API_PARAM = "heroes";
@@ -29,47 +33,58 @@ public class SuperHeroesService implements IHeroesService {
         this.apiEntity = apiEntity;
     }
 
+    @Cacheable("heroes")
     public List<SuperHero> getSuperHeroList() {
         try {
+            log.info("Get a random list of Super Heroes");
+
             String url = API_URL + API_PARAM;
-            return callExternalAPI(url);
-        }
-        catch (RestClientException e) {
-            String errorMsg = "External API Call Exception: " + e.getMessage();
-            throw new ExternalAPIException(errorMsg);
-        }
-    }
+            ObjectMapper objectMapper = new ObjectMapper();
+            String apiResults = callExternalAPI(url);
 
-    @Override
-    public List<SuperHero> getSuperHeroByFilter(String searchPhrase, int resultSize) {
-        try {
-            String url = API_URL + API_FILTER + searchPhrase;
-            List<SuperHero> superHeroList = callExternalAPI(url);
-
-            return superHeroList
-                        .stream()
-                        .limit(resultSize)
-                        .collect(Collectors.toList());
+            return objectMapper.readValue(apiResults, new TypeReference<>() {});
         }
-        catch (RestClientException e) {
+        catch (RestClientException | JsonProcessingException e) {
             throw new ExternalAPIException(e.getMessage());
         }
     }
 
-    private List<SuperHero> callExternalAPI(String url) {
-        String responseBody = "";
+    @Cacheable(value = "heroesFilter", key = "#searchPhrase")
+    @Override
+    public SuperHero getSuperHeroByFilter(String searchPhrase) {
+        String apiResults = "";
         try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, apiEntity, String.class);
-            responseBody = response.getBody();
+            log.info("Get Super hero by Filter");
 
-            if (responseBody == null || responseBody.isEmpty())
-                throw new ExternalAPIException("No data found!");
-
+            String url = API_URL + API_FILTER + searchPhrase;
             ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(responseBody, new TypeReference<>() {});
+
+            apiResults = callExternalAPI(url);
+
+            return objectMapper
+                    .readValue(apiResults, new TypeReference<>() {});
+        }
+        catch (RestClientException e) {
+            log.warn("Rest client error: {}", e.getMessage());
+            throw new ExternalAPIException(e.getMessage());
         }
         catch (JsonProcessingException e) {
-            throw new ExternalAPIException(responseBody);
+            log.warn("Error converting data from external API to an object.");
+            throw new ExternalAPIException(apiResults);
         }
+    }
+
+    private String callExternalAPI(String url) {
+        log.debug("Calling the External API: {}", url);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, apiEntity, String.class);
+        String responseBody = response.getBody();
+
+        if (responseBody == null || responseBody.isEmpty()) {
+            log.warn("No data exception thrown!");
+            throw new ExternalAPIException("No data found!");
+        }
+
+        log.info("Response from API: {} ", responseBody);
+        return responseBody;
     }
 }
