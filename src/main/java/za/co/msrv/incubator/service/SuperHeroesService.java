@@ -5,44 +5,34 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import za.co.msrv.incubator.model.SuperHero;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SuperHeroesService implements IHeroesService {
     @Value("${api.url}")
     private String API_URL;
-    @Value("${api.header.key}")
-    private String API_HEADER_KEY;
-    @Value("${api.header.key.value}")
-    private String API_HEADER_KEY_VALUE;
-    @Value("${api.header.host}")
-    private String API_HEADER_HOST;
-    @Value("${api.header.host.value}")
-    private String API_HEADER_HOST_VALUE;
 
     private final RestTemplate restTemplate;
+    private final HttpEntity<String> apiEntity;
 
-    public SuperHeroesService(RestTemplateBuilder restTemplateBuilder) {
+    public SuperHeroesService(RestTemplateBuilder restTemplateBuilder, HttpEntity<String> apiEntity) {
         this.restTemplate = restTemplateBuilder.build();
+        this.apiEntity = apiEntity;
     }
 
-    public List<SuperHero> getSuperHeroList() {
+    @Override
+    public List<SuperHero> getSuperHeroByFilter(String searchPhrase, int resultSize) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.set(API_HEADER_KEY, API_HEADER_KEY_VALUE);
-            headers.set(API_HEADER_HOST, API_HEADER_HOST_VALUE);
-
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-            ResponseEntity<String> response = restTemplate.exchange(API_URL, HttpMethod.GET, entity, String.class);
+            String url = API_URL + "?hero=" + searchPhrase;
+            ResponseEntity<String> response = restTemplate
+                                                    .exchange(url, HttpMethod.GET, apiEntity, String.class);
 
             String responseBody = response.getBody();
 
@@ -50,8 +40,12 @@ public class SuperHeroesService implements IHeroesService {
                 throw new ExternalAPIException("No data found!");
 
             ObjectMapper objectMapper = new ObjectMapper();
+            List<SuperHero> superHeroList = objectMapper.readValue(responseBody, new TypeReference<>() {});
 
-            return objectMapper.readValue(responseBody, new TypeReference<List<SuperHero>>() {});
+            return superHeroList
+                        .stream()
+                        .limit(resultSize)
+                        .collect(Collectors.toList());
         }
         catch (RestClientException | JsonProcessingException e) {
             String errorMsg = "External API Call Exception: " + e.getMessage();

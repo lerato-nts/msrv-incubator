@@ -13,6 +13,7 @@ public class SuperHeroBiography implements Serializable {
     private String[] aliases;
     private String placeOfBirth;
     private String firstAppearance;
+    private String alignment;
 
     public String getAliases() {
         if(aliases==null || aliases.length<1)
@@ -38,6 +39,7 @@ public class SuperHeroBiography implements Serializable {
                 getAliases() + " " +
                 "was born at " + placeOfBirth + ", " +
                 "and first appeared on " + firstAppearance + ". " +
-                "Alter Egos: " + alterEgos;
+                "Alter Egos: " + alterEgos + ". " +
+                "Aligned to the " + alignment + " side.";
     }
 }
