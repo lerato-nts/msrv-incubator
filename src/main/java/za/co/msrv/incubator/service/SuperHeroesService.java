@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class SuperHeroesService implements IHeroesService {
+    private static final String API_PARAM = "heroes";
+    private static final String API_FILTER = "?hero=";
     @Value("${api.url}")
     private String API_URL;
 
@@ -27,20 +29,22 @@ public class SuperHeroesService implements IHeroesService {
         this.apiEntity = apiEntity;
     }
 
+    public List<SuperHero> getSuperHeroList() {
+        try {
+            String url = API_URL + API_PARAM;
+            return callExternalAPI(url);
+        }
+        catch (RestClientException | JsonProcessingException e) {
+            String errorMsg = "External API Call Exception: " + e.getMessage();
+            throw new ExternalAPIException(errorMsg);
+        }
+    }
+
     @Override
     public List<SuperHero> getSuperHeroByFilter(String searchPhrase, int resultSize) {
         try {
-            String url = API_URL + "?hero=" + searchPhrase;
-            ResponseEntity<String> response = restTemplate
-                                                    .exchange(url, HttpMethod.GET, apiEntity, String.class);
-
-            String responseBody = response.getBody();
-
-            if(responseBody==null || responseBody.isEmpty())
-                throw new ExternalAPIException("No data found!");
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            List<SuperHero> superHeroList = objectMapper.readValue(responseBody, new TypeReference<>() {});
+            String url = API_URL + API_FILTER + searchPhrase;
+            List<SuperHero> superHeroList = callExternalAPI(url);
 
             return superHeroList
                         .stream()
@@ -51,5 +55,17 @@ public class SuperHeroesService implements IHeroesService {
             String errorMsg = "External API Call Exception: " + e.getMessage();
             throw new ExternalAPIException(errorMsg);
         }
+    }
+
+    private List<SuperHero> callExternalAPI(String url) throws JsonProcessingException {
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, apiEntity, String.class);
+
+        String responseBody = response.getBody();
+
+        if(responseBody==null || responseBody.isEmpty())
+            throw new ExternalAPIException("No data found!");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(responseBody, new TypeReference<>() {});
     }
 }

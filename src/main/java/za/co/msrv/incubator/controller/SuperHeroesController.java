@@ -15,7 +15,6 @@ import za.co.msrv.incubator.service.SuperHeroMapper;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.websocket.server.PathParam;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,15 +32,30 @@ public class SuperHeroesController {
     }
 
     @GetMapping
+    @ApiOperation(value = "A list of 20 random Super Heroes")
+    public ResponseEntity<List<SuperHeroDTO>> getSuperHeroes() {
+        List<SuperHero> superHeroList = superHeroesService.getSuperHeroList();
+
+        return mapEntityToDTO(superHeroList);
+    }
+
+    @GetMapping("/search")
     @ApiOperation(value = "A list of Super Heroes matching the search parameter")
     public ResponseEntity<List<SuperHeroDTO>> getHeroesByFilter(
             @RequestParam("searchPhrase") String searchPhrase,
             @RequestParam(defaultValue = "5", name = "resultSize")
-            @Min(1)
-            @Max(20)
+            @Min(message = "The smallest value allowed is 1 (One)", value = 1)
+            @Max(message = "The highest value allowed is 20 (Twenty)", value = 20)
             Integer resultSize)
     {
         List<SuperHero> superHeroList = superHeroesService.getSuperHeroByFilter(searchPhrase, resultSize);
+
+        return mapEntityToDTO(superHeroList);
+    }
+
+    private ResponseEntity<List<SuperHeroDTO>> mapEntityToDTO(List<SuperHero> superHeroList) {
+        if(superHeroList.isEmpty())
+            return ResponseEntity.notFound().build();
 
         List<SuperHeroDTO> superHeroDTOList = superHeroList.stream()
                 .map(superHeroMapper::convertToDto)

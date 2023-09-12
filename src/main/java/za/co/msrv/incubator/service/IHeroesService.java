@@ -7,5 +7,6 @@ import java.util.List;
 
 @Service
 public interface IHeroesService {
+    List<SuperHero> getSuperHeroList();
     List<SuperHero> getSuperHeroByFilter(String searchPhrase, int resultSize);
 }

@@ -12,7 +12,7 @@ spring:
 #      type: hazelcast
 
 api:
-  url: https://superhero-search.p.rapidapi.com/api/heroes
+  url: https://superhero-search.p.rapidapi.com/api/
   header:
     key:
       name: X-RapidAPI-Key
