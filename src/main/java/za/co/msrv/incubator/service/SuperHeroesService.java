@@ -13,9 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import za.co.msrv.incubator.dto.SuperHeroDTO;
 import za.co.msrv.incubator.model.SuperHero;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -26,17 +29,19 @@ public class SuperHeroesService implements IHeroesService {
     @Value("${api.url}")
     private String API_URL;
 
+    private final SuperHeroMapper superHeroMapper;
     private final RestTemplate restTemplate;
     private final HttpEntity<String> apiEntity;
 
-    public SuperHeroesService(RestTemplateBuilder restTemplateBuilder, HttpEntity<String> apiEntity) {
+    public SuperHeroesService(SuperHeroMapper superHeroMapper, RestTemplateBuilder restTemplateBuilder, HttpEntity<String> apiEntity) {
+        this.superHeroMapper = superHeroMapper;
         this.restTemplate = restTemplateBuilder.build();
         this.apiEntity = apiEntity;
     }
 
     @Override
     @Cacheable("heroes")
-    public List<SuperHero> getSuperHeroList() {
+    public List<SuperHeroDTO> getSuperHeroList() {
         try {
             log.info("Get a random list of Super Heroes");
 
@@ -44,7 +49,14 @@ public class SuperHeroesService implements IHeroesService {
             ObjectMapper objectMapper = new ObjectMapper();
             String apiResults = callExternalAPI(url);
 
-            return objectMapper.readValue(apiResults, new TypeReference<>() {});
+            List<SuperHero> superHeroList = objectMapper.readValue(apiResults, new TypeReference<>() {});
+
+            if(superHeroList.isEmpty())
+                return new ArrayList<>();
+
+            return superHeroList.stream()
+                    .map(superHeroMapper::convertToDto)
+                    .collect(Collectors.toList());
         }
         catch (RestClientException | JsonProcessingException e) {
             throw new ExternalAPIException(e.getMessage());
@@ -53,7 +65,7 @@ public class SuperHeroesService implements IHeroesService {
 
     @Override
     @Cacheable(value = "hero", key = "#searchPhrase")
-    public SuperHero getSuperHeroByFilter(String searchPhrase) {
+    public SuperHeroDTO getSuperHeroByFilter(String searchPhrase) {
         String apiResults = "";
         try {
             log.info("Get Super hero by Filter");
@@ -63,8 +75,10 @@ public class SuperHeroesService implements IHeroesService {
 
             apiResults = callExternalAPI(url);
 
-            return objectMapper
+            SuperHero superHero = objectMapper
                     .readValue(apiResults, new TypeReference<>() {});
+
+            return superHeroMapper.convertToDto(superHero);
         }
         catch (RestClientException e) {
             log.warn("Rest client error: {}", e.getMessage());

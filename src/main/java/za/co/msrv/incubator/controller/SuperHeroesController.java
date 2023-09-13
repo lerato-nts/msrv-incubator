@@ -9,48 +9,37 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import za.co.msrv.incubator.dto.SuperHeroDTO;
-import za.co.msrv.incubator.model.SuperHero;
 import za.co.msrv.incubator.service.IHeroesService;
-import za.co.msrv.incubator.service.SuperHeroMapper;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @Api(value = "Super Heroes Controller")
 @RequestMapping("/api/v1/heroes")
 public class SuperHeroesController {
     private final IHeroesService superHeroesService;
-    private final SuperHeroMapper superHeroMapper;
 
     @Autowired
-    public SuperHeroesController(IHeroesService superHeroesService, SuperHeroMapper superHeroMapper) {
+    public SuperHeroesController(IHeroesService superHeroesService) {
         this.superHeroesService = superHeroesService;
-        this.superHeroMapper = superHeroMapper;
     }
 
     @GetMapping
     @ApiOperation(value = "A list of 20 random Super Heroes")
     public ResponseEntity<List<SuperHeroDTO>> getSuperHeroes() {
-        List<SuperHero> superHeroList = superHeroesService.getSuperHeroList();
+        List<SuperHeroDTO> superHeroDTOList = superHeroesService.getSuperHeroList();
 
-        if(superHeroList.isEmpty())
+        if(superHeroDTOList.isEmpty())
             return ResponseEntity.notFound().build();
-
-        List<SuperHeroDTO> superHeroDTOList = superHeroList.stream()
-                .map(superHeroMapper::convertToDto)
-                .collect(Collectors.toList());
 
         return ResponseEntity.ok(superHeroDTOList);
     }
 
     @GetMapping("/search")
     @ApiOperation(value = "A list of Super Heroes matching the search parameter")
-    public ResponseEntity<SuperHeroDTO> getHeroesByFilter(
-            @RequestParam("searchPhrase") String searchPhrase)
+    public ResponseEntity<SuperHeroDTO> getHeroesByFilter(@RequestParam("searchPhrase") String searchPhrase)
     {
-        SuperHero superHero = superHeroesService.getSuperHeroByFilter(searchPhrase);
-        SuperHeroDTO superHeroDto = superHeroMapper.convertToDto(superHero);
+        SuperHeroDTO superHeroDto = superHeroesService.getSuperHeroByFilter(searchPhrase);
 
         return ResponseEntity.ok(superHeroDto);
     }
