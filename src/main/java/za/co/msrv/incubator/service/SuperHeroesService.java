@@ -1,106 +1,64 @@
 package za.co.msrv.incubator.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import za.co.msrv.incubator.dto.SuperHeroDTO;
-import za.co.msrv.incubator.model.SuperHero;
+import za.co.msrv.incubator.exceptions.ExternalAPIException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Slf4j
 @Service
 public class SuperHeroesService implements IHeroesService {
-    private static final String API_PARAM = "heroes";
-    private static final String API_FILTER = "?hero=";
     @Value("${api.url}")
     private String API_URL;
+    private static final String API_PARAM = "heroes";
+    private static final String API_FILTER = "?hero=";
 
     private final SuperHeroMapper superHeroMapper;
-    private final RestTemplate restTemplate;
-    private final HttpEntity<String> apiEntity;
+    private final ExternalApiService externalApiService;
 
-    public SuperHeroesService(SuperHeroMapper superHeroMapper, RestTemplateBuilder restTemplateBuilder, HttpEntity<String> apiEntity) {
+    public SuperHeroesService(SuperHeroMapper superHeroMapper, ExternalApiService externalApiService) {
         this.superHeroMapper = superHeroMapper;
-        this.restTemplate = restTemplateBuilder.build();
-        this.apiEntity = apiEntity;
+        this.externalApiService = externalApiService;
     }
 
     @Override
     @Cacheable("heroes")
-    public List<SuperHeroDTO> getSuperHeroList() {
+    public List<SuperHeroDTO> getSuperHeroList()
+    {
+        log.info("Get a random list of Super Heroes");
         try {
-            log.info("Get a random list of Super Heroes");
-
-            String url = API_URL + API_PARAM;
-            ObjectMapper objectMapper = new ObjectMapper();
-            String apiResults = callExternalAPI(url);
-
-            List<SuperHero> superHeroList = objectMapper.readValue(apiResults, new TypeReference<>() {});
-
-            if(superHeroList.isEmpty())
-                return new ArrayList<>();
-
-            return superHeroList.stream()
-                    .map(superHeroMapper::convertToDto)
-                    .collect(Collectors.toList());
+            final String url = API_URL + API_PARAM;
+            String apiResponse = externalApiService.callExternalAPI(url);
+            return superHeroMapper.convertStringToDtoList(apiResponse);
         }
         catch (RestClientException | JsonProcessingException e) {
+            log.warn("Rest client error: {}", e.getMessage());
             throw new ExternalAPIException(e.getMessage());
         }
     }
 
     @Override
     @Cacheable(value = "hero", key = "#searchPhrase")
-    public SuperHeroDTO getSuperHeroByFilter(String searchPhrase) {
-        String apiResults = "";
+    public SuperHeroDTO getSuperHeroByFilter(String searchPhrase)
+    {
+        log.info("Get Super hero by Filter");
         try {
-            log.info("Get Super hero by Filter");
-
-            String url = API_URL + API_FILTER + searchPhrase;
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            apiResults = callExternalAPI(url);
-
-            SuperHero superHero = objectMapper
-                    .readValue(apiResults, new TypeReference<>() {});
-
-            return superHeroMapper.convertToDto(superHero);
+            final String url = API_URL + API_FILTER + searchPhrase;
+            String apiResponse = externalApiService.callExternalAPI(url);
+            return superHeroMapper.convertStringToDto(apiResponse);
         }
         catch (RestClientException e) {
             log.warn("Rest client error: {}", e.getMessage());
             throw new ExternalAPIException(e.getMessage());
+        } catch (JsonProcessingException e) {
+            throw new ExternalAPIException(e.getMessage());
         }
-        catch (JsonProcessingException e) {
-            log.warn("Error converting data from external API to an object.");
-            throw new ExternalAPIException(apiResults);
-        }
-    }
-
-    private String callExternalAPI(String url) {
-        log.info("Calling the External API: {}", url);
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, apiEntity, String.class);
-        String responseBody = response.getBody();
-
-        if (responseBody == null || responseBody.isEmpty()) {
-            log.warn("No data exception thrown!");
-            throw new ExternalAPIException("No data found!");
-        }
-
-        log.trace("Response from API: {} ", responseBody);
-        return responseBody;
     }
 }
