@@ -17,3 +17,8 @@ cache:
       ttl: 60
     heroes:
       ttl: 360
+
+threadpool:
+  coreSize: 10
+  maxSize: 50
+  queueCapacity: 100
