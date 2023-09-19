@@ -1,13 +1,15 @@
 package za.co.msrv.incubator.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class ServiceApiConfig {
+public class ExternalApiConfig {
     @Value("${api.header.key.name}")
     private String API_HEADER_KEY;
     @Value("${api.header.key.value}")
@@ -29,5 +31,15 @@ public class ServiceApiConfig {
     @Bean
     public HttpEntity<String> externalApiEntity() {
         return new HttpEntity<>(externalApiHeaders());
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }
