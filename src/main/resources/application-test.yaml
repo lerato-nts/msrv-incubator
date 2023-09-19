@@ -1,0 +1,20 @@
+server:
+  error:
+    include-message: always
+  port: 8080
+  servlet:
+    context-path: /
+    session:
+      timeout: 10m
+
+cache:
+  hazelcast:
+    hero:
+      ttl: 20
+    heroes:
+      ttl: 60
+
+threadpool:
+  coreSize: 2
+  maxSize: 5
+  queueCapacity: 10
